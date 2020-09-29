@@ -10,6 +10,8 @@
 #if defined(PREFER_SDFAT_LIBRARY)
 #include "SdFat.h"
 extern SdFat SD;
+#elif defined(PREFER_SDMMC_LIBRARY)
+#include "SD_MMC.h"
 #else
 #include "SD.h"
 #endif
@@ -149,7 +151,11 @@ bool IniFile::open(void)
 {
 	if (_file)
 		_file.close();
+#ifdef PREFER_SDMMC_LIBRARY
+    _file = SD_MMC.open(_filename); //, _mode);
+#else
 	_file = SD.open(_filename, _mode);
+#endif	
 	if (isOpen()) {
 		_error = errorNoError;
 		return true;

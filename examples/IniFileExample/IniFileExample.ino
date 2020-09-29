@@ -1,12 +1,18 @@
-#include <SD.h>
 
-#include <SPI.h>
-#include <IPAddress.h>
-#include <IniFile.h>
-
+#define PREFER_SDMMC_LIBRARY
+#ifndef PREFER_SDMMC_LIBRARY
+   #include <SD.h>
+   #include <SPI.h>
 // The select pin used for the SD card
 //#define SD_SELECT 4
-#define SD_SELECT 22
+  #define SD_SELECT 22
+#endif
+
+
+#include <IPAddress.h>
+#include "IniFile.h"
+
+
 #define ETHERNET_SELECT 10
 
 void printErrorMessage(uint8_t e, bool eol = true)
@@ -52,22 +58,29 @@ void setup()
   // Configure all of the SPI select pins as outputs and make SPI
   // devices inactive, otherwise the earlier init routines may fail
   // for devices which have not yet been configured.
+#ifndef PREFER_SDMMC_LIBRARY
   pinMode(SD_SELECT, OUTPUT);
   digitalWrite(SD_SELECT, HIGH); // disable SD card
+
   
   pinMode(ETHERNET_SELECT, OUTPUT);
   digitalWrite(ETHERNET_SELECT, HIGH); // disable Ethernet
+#endif
 
   const size_t bufferLen = 80;
   char buffer[bufferLen];
 
   const char *filename = "/net.ini";
-  Serial.begin(9600);
+  Serial.begin(115200);
+#ifndef PREFER_SDMMC_LIBRARY
   SPI.begin();
   if (!SD.begin(SD_SELECT))
+#else
+  if (!SD_MMC.begin())
+#endif  
     while (1)
       Serial.println("SD.begin() failed");
-  
+  Serial.println("opening file now");
   IniFile ini(filename);
   if (!ini.open()) {
     Serial.print("Ini file ");
